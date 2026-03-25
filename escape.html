@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeHer — Escape</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f4f5; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+  .status-bar { background: linear-gradient(135deg,#be185d,#9f1239); padding: 10px 20px 0; display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .header { background: linear-gradient(135deg,#be185d,#9f1239); padding: 16px 20px 24px; color: white; }
+  .header-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .header-sub { font-size: 13px; opacity: .8; }
+  .content { padding: 14px 14px 90px; }
+  .card { background: white; border-radius: 16px; padding: 18px; border: 1px solid #ffe4e6; box-shadow: 0 2px 10px rgba(190,24,93,0.07); margin-bottom: 14px; }
+  .card-title { font-weight: 800; font-size: 15px; color: #111827; margin-bottom: 12px; }
+
+  /* Fake Call Contacts */
+  .caller-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .caller-btn { padding: 14px 10px; border-radius: 14px; border: 2px solid #ffe4e6; background: #fff9fb; cursor: pointer; text-align: center; transition: all .2s; font-family: 'Segoe UI', sans-serif; }
+  .caller-btn:hover { border-color: #fda4af; background: #fff1f2; transform: translateY(-2px); }
+  .caller-btn.selected { border-color: #be185d; background: #fff1f2; }
+  .caller-icon { font-size: 28px; margin-bottom: 6px; }
+  .caller-name { font-weight: 700; font-size: 13px; color: #374151; }
+  .caller-num  { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+  /* Fake Call Screen */
+  .fake-call { display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 100vh; background: linear-gradient(180deg,#1a1a2e,#16213e); z-index: 200; flex-direction: column; align-items: center; justify-content: space-between; padding: 60px 30px 50px; }
+  .fake-call.show { display: flex; }
+  .call-status { color: rgba(255,255,255,.7); font-size: 14px; margin-bottom: 8px; }
+  .call-name   { color: white; font-size: 30px; font-weight: 900; margin-bottom: 6px; }
+  .call-num    { color: rgba(255,255,255,.6); font-size: 14px; margin-bottom: 30px; }
+  .call-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg,#be185d,#9f1239); display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 24px; box-shadow: 0 0 40px rgba(190,24,93,.4); }
+  .call-timer  { color: rgba(255,255,255,.8); font-size: 20px; font-weight: 700; font-family: monospace; }
+  .call-actions { display: flex; justify-content: center; gap: 40px; width: 100%; }
+  .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; }
+  .call-btn-lbl { font-size: 11px; color: rgba(255,255,255,.7); margin-top: 8px; text-align: center; }
+  .btn-decline { background: #dc2626; }
+  .btn-mute    { background: rgba(255,255,255,.2); }
+  .btn-speaker { background: rgba(255,255,255,.2); }
+
+  /* Delay selector */
+  .delay-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .delay-btn { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; color: #6b7280; font-family: 'Segoe UI', sans-serif; }
+  .delay-btn.active { border-color: #be185d; color: #be185d; background: #fff1f2; }
+
+  .btn-main { width: 100%; padding: 14px; background: linear-gradient(135deg,#be185d,#9f1239); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 16px rgba(190,24,93,.35); transition: all .2s; }
+  .btn-main:hover { transform: translateY(-1px); }
+
+  /* Calculator Disguise */
+  .calc { background: #1a1a2e; border-radius: 20px; overflow: hidden; }
+  .calc-screen { background: #0f0f1a; padding: 20px 16px 12px; text-align: right; }
+  .calc-expr { font-size: 14px; color: rgba(255,255,255,.4); min-height: 20px; font-family: monospace; }
+  .calc-display { font-size: 40px; font-weight: 300; color: white; font-family: monospace; word-break: break-all; }
+  .calc-buttons { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: #2a2a3e; }
+  .calc-btn { padding: 18px 0; border: none; cursor: pointer; font-size: 18px; font-weight: 500; transition: opacity .1s; font-family: 'Segoe UI', sans-serif; }
+  .calc-btn:active { opacity: .7; }
+  .calc-op  { background: #ff9f0a; color: white; font-size: 22px; }
+  .calc-fn  { background: #3a3a4e; color: rgba(255,255,255,.85); }
+  .calc-num { background: #2c2c3e; color: white; }
+  .calc-zero { grid-column: span 2; text-align: left; padding-left: 28px; }
+  .calc-eq  { background: #ff9f0a; color: white; }
+  .calc-hint { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 10px; padding: 8px; background: #f8fafc; border-radius: 8px; }
+  .recording-indicator { display: none; text-align: center; padding: 8px; background: #fef2f2; border-radius: 8px; margin-top: 8px; font-size: 12px; font-weight: 700; color: #dc2626; }
+  .recording-indicator.show { display: block; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+  /* Escape routes */
+  .escape-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ffe4e6; background: #fff9fb; cursor: pointer; transition: all .2s; }
+  .escape-item:hover { background: #fff1f2; }
+  .escape-icon { font-size: 24px; }
+  .escape-name { font-weight: 700; font-size: 13px; color: #374151; }
+  .escape-sub  { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .escape-time { font-weight: 800; font-size: 13px; color: #be185d; }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid #ffe4e6; display: flex; box-shadow: 0 -4px 20px rgba(190,24,93,.1); z-index: 99; }
+  .nav-item { flex: 1; padding: 10px 4px 14px; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Segoe UI', sans-serif; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: #9ca3af; }
+  .nav-item.active .nav-label { color: #be185d; }
+  .nav-bar { width: 20px; height: 3px; border-radius: 999px; background: #be185d; margin-top: 1px; }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(40px); background: white; border: 1px solid #ffe4e6; border-radius: 12px; padding: 11px 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; box-shadow: 0 8px 24px rgba(190,24,93,0.15); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { color: #16a34a; border-color: #86efac; }
+  .toast.error   { color: #dc2626; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<!-- Fake Call Screen -->
+<div class="fake-call" id="fake-call-screen">
+  <div style="text-align:center;width:100%;">
+    <div class="call-status" id="call-status">Incoming Call...</div>
+    <div class="call-name" id="call-name-display">Mom</div>
+    <div class="call-num" id="call-num-display">+91 98765 00001</div>
+    <div class="call-avatar" id="call-avatar">👩</div>
+    <div class="call-timer" id="call-timer">00:00</div>
+  </div>
+  <div class="call-actions">
+    <div style="text-align:center;">
+      <button class="call-btn btn-mute" onclick="showToast('Muted')">🔇</button>
+      <div class="call-btn-lbl">mute</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="call-btn btn-decline" onclick="endFakeCall()">📵</button>
+      <div class="call-btn-lbl" style="color:#dc2626;">end call</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="call-btn btn-speaker" onclick="showToast('Speaker on')">🔊</button>
+      <div class="call-btn-lbl">speaker</div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span id="curr-time">9:15 PM</span>
+  <span>🛡️ SafeHer</span>
+  <span>🔋 84%</span>
+</div>
+
+<div class="header">
+  <div class="header-title">🎭 Escape & Disguise</div>
+  <div class="header-sub">Fake calls, calculator mode & smart exits</div>
+</div>
+
+<div class="content">
+
+  <!-- Fake Call -->
+  <div class="card">
+    <div class="card-title">📞 Fake Incoming Call</div>
+    <div class="caller-grid">
+      <div class="caller-btn selected" id="caller-mom" onclick="selectCaller('Mom','👩','+91 98765 00001')">
+        <div class="caller-icon">👩</div>
+        <div class="caller-name">Mom</div>
+        <div class="caller-num">+91 98765 00001</div>
+      </div>
+      <div class="caller-btn" id="caller-boss" onclick="selectCaller('Boss / Manager','👨‍💼','+91 98765 00002')">
+        <div class="caller-icon">👨‍💼</div>
+        <div class="caller-name">Boss / Manager</div>
+        <div class="caller-num">+91 98765 00002</div>
+      </div>
+      <div class="caller-btn" id="caller-hospital" onclick="selectCaller('Hospital','🏥','+91 11-2234-5678')">
+        <div class="caller-icon">🏥</div>
+        <div class="caller-name">Hospital</div>
+        <div class="caller-num">+91 11-2234-5678</div>
+      </div>
+      <div class="caller-btn" id="caller-police" onclick="selectCaller('Police Control','👮','+91 100')">
+        <div class="caller-icon">👮</div>
+        <div class="caller-name">Police Control</div>
+        <div class="caller-num">+91 100</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">⏱️ Ring after...</div>
+    <div class="delay-row">
+      <div class="delay-btn active" id="delay-0" onclick="selectDelay(0)">Now</div>
+      <div class="delay-btn" id="delay-5" onclick="selectDelay(5)">5 sec</div>
+      <div class="delay-btn" id="delay-10" onclick="selectDelay(10)">10 sec</div>
+      <div class="delay-btn" id="delay-30" onclick="selectDelay(30)">30 sec</div>
+    </div>
+
+    <button class="btn-main" onclick="startFakeCall()">📞 Start Fake Call</button>
+  </div>
+
+  <!-- Calculator Disguise -->
+  <div class="card">
+    <div class="card-title">🔢 Calculator Disguise Mode</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">
+      App looks like a calculator while secretly recording audio in background!
+    </div>
+
+    <div class="calc">
+      <div class="calc-screen">
+        <div class="calc-expr" id="calc-expr"></div>
+        <div class="calc-display" id="calc-display">0</div>
+      </div>
+      <div class="calc-buttons">
+        <button class="calc-btn calc-fn" onclick="calcFn('AC')">AC</button>
+        <button class="calc-btn calc-fn" onclick="calcFn('+/-')">+/-</button>
+        <button class="calc-btn calc-fn" onclick="calcFn('%')">%</button>
+        <button class="calc-btn calc-op" onclick="calcOp('÷')">÷</button>
+        <button class="calc-btn calc-num" onclick="calcNum('7')">7</button>
+        <button class="calc-btn calc-num" onclick="calcNum('8')">8</button>
+        <button class="calc-btn calc-num" onclick="calcNum('9')">9</button>
+        <button class="calc-btn calc-op" onclick="calcOp('×')">×</button>
+        <button class="calc-btn calc-num" onclick="calcNum('4')">4</button>
+        <button class="calc-btn calc-num" onclick="calcNum('5')">5</button>
+        <button class="calc-btn calc-num" onclick="calcNum('6')">6</button>
+        <button class="calc-btn calc-op" onclick="calcOp('−')">−</button>
+        <button class="calc-btn calc-num" onclick="calcNum('1')">1</button>
+        <button class="calc-btn calc-num" onclick="calcNum('2')">2</button>
+        <button class="calc-btn calc-num" onclick="calcNum('3')">3</button>
+        <button class="calc-btn calc-op" onclick="calcOp('+')">+</button>
+        <button class="calc-btn calc-num calc-zero" onclick="calcNum('0')">0</button>
+        <button class="calc-btn calc-num" onclick="calcNum('.')">.</button>
+        <button class="calc-btn calc-eq" onclick="calcEquals()">=</button>
+      </div>
+    </div>
+
+    <div class="calc-hint">💡 Type <strong>911</strong> then <strong>=</strong> to secretly activate SOS recording!</div>
+    <div class="recording-indicator" id="rec-indicator">🔴 Recording in background...</div>
+  </div>
+
+  <!-- Smart Escape Routes -->
+  <div class="card">
+    <div class="card-title">🏃 Smart Exit Strategies</div>
+    <div class="escape-item" onclick="bookCab()">
+      <div class="escape-icon">🚕</div>
+      <div style="flex:1;">
+        <div class="escape-name">Auto-Book Cab</div>
+        <div class="escape-sub">Nearest cab booked silently in background</div>
+      </div>
+      <div class="escape-time">2 min</div>
+    </div>
+    <div class="escape-item" onclick="findMetro()">
+      <div class="escape-icon">🚇</div>
+      <div style="flex:1;">
+        <div class="escape-name">Nearest Metro Route</div>
+        <div class="escape-sub">CP Metro — Blue Line Platform 2</div>
+      </div>
+      <div class="escape-time">4 min</div>
+    </div>
+    <div class="escape-item" onclick="window.location.href='community.html'">
+      <div class="escape-icon">☕</div>
+      <div style="flex:1;">
+        <div class="escape-name">Run to Safe Spot</div>
+        <div class="escape-sub">Metro Cafe CP — 0.3 km away</div>
+      </div>
+      <div class="escape-time">4 min</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='dashboard.html'"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></button>
+  <button class="nav-item" onclick="window.location.href='ai-guard.html'"><div class="nav-icon">🤖</div><div class="nav-label">AI Guard</div></button>
+  <button class="nav-item" onclick="window.location.href='community.html'"><div class="nav-icon">🌐</div><div class="nav-label">Community</div></button>
+  <button class="nav-item active"><div class="nav-icon">🎭</div><div class="nav-label">Escape</div><div class="nav-bar"></div></button>
+  <button class="nav-item" onclick="window.location.href='evidence.html'"><div class="nav-icon">⚖️</div><div class="nav-label">Evidence</div></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedCaller = { name: 'Mom', icon: '👩', num: '+91 98765 00001' };
+let selectedDelay = 0;
+let callTimerInterval = null;
+let callSeconds = 0;
+let calcVal = '0', calcExpr = '', calcOp = '', calcPrev = '';
+
+window.onload = () => {
+  const user = JSON.parse(localStorage.getItem('safher_user') || '{}');
+  if (!user.id) { window.location.href = 'index.html'; return; }
+  updateTime(); setInterval(updateTime, 1000);
+};
+
+function updateTime() {
+  document.getElementById('curr-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function selectCaller(name, icon, num) {
+  selectedCaller = { name, icon, num };
+  document.querySelectorAll('.caller-btn').forEach(b => b.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function selectDelay(secs) {
+  selectedDelay = secs;
+  document.querySelectorAll('.delay-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('delay-' + secs).classList.add('active');
+}
+
+function startFakeCall() {
+  if (selectedDelay > 0) {
+    showToast(`Fake call ringing in ${selectedDelay} seconds...`);
+    setTimeout(showFakeCall, selectedDelay * 1000);
+  } else { showFakeCall(); }
+}
+
+function showFakeCall() {
+  document.getElementById('call-name-display').textContent = selectedCaller.name;
+  document.getElementById('call-num-display').textContent = selectedCaller.num;
+  document.getElementById('call-avatar').textContent = selectedCaller.icon;
+  document.getElementById('call-status').textContent = 'Incoming Call...';
+  document.getElementById('call-timer').textContent = '00:00';
+  document.getElementById('fake-call-screen').className = 'fake-call show';
+  callSeconds = 0;
+  setTimeout(() => {
+    document.getElementById('call-status').textContent = 'Connected';
+    callTimerInterval = setInterval(() => {
+      callSeconds++;
+      const m = String(Math.floor(callSeconds/60)).padStart(2,'0');
+      const s = String(callSeconds%60).padStart(2,'0');
+      document.getElementById('call-timer').textContent = m + ':' + s;
+    }, 1000);
+  }, 2000);
+}
+
+function endFakeCall() {
+  clearInterval(callTimerInterval);
+  document.getElementById('fake-call-screen').className = 'fake-call';
+  showToast('Call ended');
+}
+
+// Calculator
+function calcNum(n) {
+  if (calcVal === '0' || calcOp !== calcPrev) { calcVal = n; calcPrev = calcOp; }
+  else calcVal += n;
+  document.getElementById('calc-display').textContent = calcVal;
+  // Secret SOS trigger
+  if (calcVal === '911') {
+    document.getElementById('rec-indicator').className = 'recording-indicator show';
+    showToast('🔴 Secret recording activated!', 'error');
+  }
+}
+
+function calcFn(fn) {
+  if (fn === 'AC') { calcVal = '0'; calcExpr = ''; document.getElementById('calc-display').textContent = '0'; document.getElementById('calc-expr').textContent = ''; document.getElementById('rec-indicator').className = 'recording-indicator'; }
+  else if (fn === '+/-') { calcVal = String(-parseFloat(calcVal)); document.getElementById('calc-display').textContent = calcVal; }
+  else if (fn === '%') { calcVal = String(parseFloat(calcVal)/100); document.getElementById('calc-display').textContent = calcVal; }
+}
+
+function calcOp(op) {
+  calcExpr = calcVal + ' ' + op;
+  calcPrev = op;
+  calcOp = op;
+  document.getElementById('calc-expr').textContent = calcExpr;
+}
+
+function calcEquals() {
+  if (calcVal === '911') {
+    document.getElementById('rec-indicator').className = 'recording-indicator show';
+    showToast('🔴 Secret SOS recording activated!', 'error');
+    document.getElementById('calc-display').textContent = '0';
+    return;
+  }
+  try {
+    const expr = calcExpr.replace('÷','/').replace('×','*').replace('−','-') + calcVal;
+    const result = eval(expr);
+    document.getElementById('calc-display').textContent = result;
+    document.getElementById('calc-expr').textContent = expr + ' =';
+    calcVal = String(result); calcExpr = '';
+  } catch(e) { document.getElementById('calc-display').textContent = 'Error'; }
+}
+
+function bookCab() { showToast('Cab booked! Driver arriving in 2 minutes.'); }
+function findMetro() { window.open('https://maps.google.com/?q=Connaught+Place+Metro', '_blank'); }
+</script>
+</body>
+</html>

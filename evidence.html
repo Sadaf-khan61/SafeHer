@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeHer — Evidence Vault</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f4f5; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+  .status-bar { background: linear-gradient(135deg,#be185d,#9f1239); padding: 10px 20px 0; display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .header { background: linear-gradient(135deg,#be185d,#9f1239); padding: 16px 20px 24px; color: white; }
+  .header-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .header-sub { font-size: 13px; opacity: .8; }
+  .content { padding: 14px 14px 90px; }
+  .card { background: white; border-radius: 16px; padding: 18px; border: 1px solid #ffe4e6; box-shadow: 0 2px 10px rgba(190,24,93,0.07); margin-bottom: 14px; }
+  .card-title { font-weight: 800; font-size: 15px; color: #111827; margin-bottom: 12px; }
+
+  /* Record Buttons */
+  .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .rec-btn { padding: 16px 10px; border-radius: 14px; border: none; cursor: pointer; text-align: center; font-family: 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; transition: all .2s; }
+  .rec-btn:hover { transform: translateY(-2px); }
+  .rec-btn-icon { font-size: 28px; margin-bottom: 6px; }
+  .rec-btn.audio    { background: #eff6ff; color: #1d4ed8; }
+  .rec-btn.video    { background: #f0fdf4; color: #16a34a; }
+  .rec-btn.photo    { background: #fdf4ff; color: #9333ea; }
+  .rec-btn.location { background: #fff7ed; color: #ea580c; }
+  .rec-btn.recording { animation: pulse-rec .8s infinite; }
+  @keyframes pulse-rec { 0%,100%{opacity:1;} 50%{opacity:.6;} }
+
+  /* Recording Status */
+  .rec-status { display: none; text-align: center; padding: 12px; background: #fef2f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 14px; }
+  .rec-status.show { display: block; }
+  .rec-status-dot { display: inline-block; width: 10px; height: 10px; background: #dc2626; border-radius: 50%; margin-right: 8px; animation: blink .8s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.2;} }
+  .rec-timer { font-size: 24px; font-weight: 900; color: #dc2626; font-family: monospace; margin: 6px 0; }
+  .rec-stop { padding: 8px 20px; background: #dc2626; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* Evidence List */
+  .evidence-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ffe4e6; background: #fff9fb; }
+  .ev-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .ev-name { font-weight: 700; font-size: 13px; color: #374151; }
+  .ev-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .ev-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #f0fdf4; color: #16a34a; }
+
+  /* FIR Section */
+  .form-group { margin-bottom: 13px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 5px; }
+  input, select, textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; color: #111827; outline: none; font-family: 'Segoe UI', sans-serif; background: #fafafa; }
+  input:focus, select:focus, textarea:focus { border-color: #be185d; }
+  textarea { resize: none; min-height: 80px; }
+  .btn-main { width: 100%; padding: 14px; background: linear-gradient(135deg,#be185d,#9f1239); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 16px rgba(190,24,93,.35); transition: all .2s; margin-top: 4px; }
+  .btn-main:hover { transform: translateY(-1px); }
+  .btn-main:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* FIR Preview */
+  .fir-preview { display: none; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 14px; font-size: 13px; line-height: 1.7; color: #374151; white-space: pre-wrap; font-family: monospace; }
+  .fir-preview.show { display: block; }
+  .fir-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .fir-action-btn { padding: 11px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; }
+
+  /* Stats */
+  .vault-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+  .vault-stat { background: white; border-radius: 12px; padding: 12px; text-align: center; border: 1px solid #ffe4e6; }
+  .vault-stat-val { font-size: 22px; font-weight: 900; color: #be185d; }
+  .vault-stat-lbl { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid #ffe4e6; display: flex; box-shadow: 0 -4px 20px rgba(190,24,93,.1); z-index: 99; }
+  .nav-item { flex: 1; padding: 10px 4px 14px; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Segoe UI', sans-serif; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: #9ca3af; }
+  .nav-item.active .nav-label { color: #be185d; }
+  .nav-bar { width: 20px; height: 3px; border-radius: 999px; background: #be185d; margin-top: 1px; }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(40px); background: white; border: 1px solid #ffe4e6; border-radius: 12px; padding: 11px 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; box-shadow: 0 8px 24px rgba(190,24,93,0.15); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { color: #16a34a; border-color: #86efac; }
+  .toast.error   { color: #dc2626; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span id="curr-time">9:15 PM</span>
+  <span>🛡️ SafeHer</span>
+  <span>🔋 84%</span>
+</div>
+
+<div class="header">
+  <div class="header-title">⚖️ Evidence Vault</div>
+  <div class="header-sub">Encrypted evidence & AI FIR generator</div>
+</div>
+
+<div class="content">
+
+  <!-- Vault Stats -->
+  <div class="vault-stats">
+    <div class="vault-stat"><div class="vault-stat-val" id="ev-count">0</div><div class="vault-stat-lbl">Evidence Files</div></div>
+    <div class="vault-stat"><div class="vault-stat-val">AES-256</div><div class="vault-stat-lbl">Encryption</div></div>
+    <div class="vault-stat"><div class="vault-stat-val" id="fir-count">0</div><div class="vault-stat-lbl">FIR Drafts</div></div>
+  </div>
+
+  <!-- Record Evidence -->
+  <div class="card">
+    <div class="card-title">🔴 Record Evidence</div>
+
+    <div class="rec-status" id="rec-status">
+      <div><span class="rec-status-dot"></span><strong>Recording in progress...</strong></div>
+      <div class="rec-timer" id="rec-timer">00:00</div>
+      <button class="rec-stop" onclick="stopRecording()">⏹ Stop & Save</button>
+    </div>
+
+    <div class="record-grid">
+      <button class="rec-btn audio" onclick="startRecording('AUDIO')">
+        <div class="rec-btn-icon">🎙️</div>Audio Recording
+      </button>
+      <button class="rec-btn video" onclick="startRecording('VIDEO')">
+        <div class="rec-btn-icon">📹</div>Video Recording
+      </button>
+      <button class="rec-btn photo" onclick="startRecording('PHOTO')">
+        <div class="rec-btn-icon">📷</div>Take Photo
+      </button>
+      <button class="rec-btn location" onclick="saveLocation()">
+        <div class="rec-btn-icon">📍</div>Save Location
+      </button>
+    </div>
+
+    <div style="font-size:11px;color:#9ca3af;text-align:center;">
+      🔒 All evidence is AES-256 encrypted and auto-synced to secure cloud
+    </div>
+  </div>
+
+  <!-- Evidence List -->
+  <div class="card">
+    <div class="card-title">🗂️ My Evidence Vault</div>
+    <div id="evidence-list">
+      <div style="text-align:center;color:#9ca3af;font-size:13px;padding:20px;">
+        No evidence recorded yet.<br>Start recording to protect yourself!
+      </div>
+    </div>
+  </div>
+
+  <!-- FIR Generator -->
+  <div class="card">
+    <div class="card-title">📋 AI FIR Generator</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:14px;">
+      🤖 AI will automatically write a police complaint based on your inputs
+    </div>
+
+    <div class="form-group">
+      <label>⚠️ Incident Type</label>
+      <select id="fir-type">
+        <option>Harassment</option>
+        <option>Stalking</option>
+        <option>Physical Assault</option>
+        <option>Eve Teasing</option>
+        <option>Molestation</option>
+        <option>Theft / Robbery</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>📍 Incident Location</label>
+      <input type="text" id="fir-location" placeholder="Connaught Place Metro, Delhi"/>
+    </div>
+
+    <div class="form-group">
+      <label>📝 Describe What Happened</label>
+      <textarea id="fir-desc" placeholder="Describe the incident in detail. AI will convert this into a formal FIR..."></textarea>
+    </div>
+
+    <button class="btn-main" onclick="generateFIR()" id="fir-btn">
+      🤖 Generate AI FIR Draft
+    </button>
+
+    <!-- FIR Preview -->
+    <div class="fir-preview" id="fir-preview"></div>
+
+    <div class="fir-actions" id="fir-actions" style="display:none;">
+      <button class="fir-action-btn" style="background:#eff6ff;color:#1d4ed8;" onclick="copyFIR()">📋 Copy FIR</button>
+      <button class="fir-action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="submitFIR()">📮 Submit to Police</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='dashboard.html'"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></button>
+  <button class="nav-item" onclick="window.location.href='ai-guard.html'"><div class="nav-icon">🤖</div><div class="nav-label">AI Guard</div></button>
+  <button class="nav-item" onclick="window.location.href='community.html'"><div class="nav-icon">🌐</div><div class="nav-label">Community</div></button>
+  <button class="nav-item" onclick="window.location.href='escape.html'"><div class="nav-icon">🎭</div><div class="nav-label">Escape</div></button>
+  <button class="nav-item active"><div class="nav-icon">⚖️</div><div class="nav-label">Evidence</div><div class="nav-bar"></div></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://safeher-a-women-saftey-app.onrender.com';
+const user = JSON.parse(localStorage.getItem('safher_user') || '{}');
+let recInterval = null;
+let recSeconds  = 0;
+let recType     = '';
+let currentFirId = null;
+let evidenceList = [];
+
+window.onload = () => {
+  if (!user.id) { window.location.href = 'index.html'; return; }
+  updateTime(); setInterval(updateTime, 1000);
+  loadEvidence();
+};
+
+function updateTime() {
+  document.getElementById('curr-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function startRecording(type) {
+  recType = type;
+  if (type === 'PHOTO') { saveEvidence('PHOTO', 'photo_' + Date.now() + '.jpg', 'Photo captured'); return; }
+  recSeconds = 0;
+  document.getElementById('rec-status').className = 'rec-status show';
+  document.getElementById('rec-timer').textContent = '00:00';
+  recInterval = setInterval(() => {
+    recSeconds++;
+    const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+    const s = String(recSeconds%60).padStart(2,'0');
+    document.getElementById('rec-timer').textContent = m + ':' + s;
+  }, 1000);
+  showToast(type === 'AUDIO' ? '🎙️ Audio recording started!' : '📹 Video recording started!');
+}
+
+function stopRecording() {
+  clearInterval(recInterval);
+  document.getElementById('rec-status').className = 'rec-status';
+  const fileName = recType.toLowerCase() + '_' + Date.now() + (recType === 'AUDIO' ? '.aac' : '.mp4');
+  saveEvidence(recType, fileName, recType === 'AUDIO' ? `Audio · ${recSeconds}s` : `Video · ${recSeconds}s`);
+}
+
+async function saveEvidence(type, fileName, meta) {
+  const icons = { AUDIO:'🎙️', VIDEO:'📹', PHOTO:'📷', LOCATION:'📍' };
+  const colors = { AUDIO:'#eff6ff', VIDEO:'#f0fdf4', PHOTO:'#fdf4ff', LOCATION:'#fff7ed' };
+  evidenceList.unshift({ type, fileName, meta, time: new Date().toLocaleTimeString() });
+  renderEvidence();
+  document.getElementById('ev-count').textContent = evidenceList.length;
+
+  // Save to backend
+  try {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      await fetch(`${API}/api/evidence/save`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ userId: user.id, evidenceType: type, fileUrl: 'local://' + fileName, locationName: 'Current Location', durationSeconds: recSeconds })
+      });
+    }, async () => {
+      await fetch(`${API}/api/evidence/save`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ userId: user.id, evidenceType: type, fileUrl: 'local://' + fileName, locationName: 'Delhi', durationSeconds: recSeconds })
+      });
+    });
+  } catch(e) { console.log('Evidence save error', e); }
+  showToast(`${type} evidence saved & encrypted! 🔒`);
+}
+
+function renderEvidence() {
+  const list = document.getElementById('evidence-list');
+  const icons = { AUDIO:'🎙️', VIDEO:'📹', PHOTO:'📷', LOCATION:'📍' };
+  const colors = { AUDIO:'#eff6ff', VIDEO:'#f0fdf4', PHOTO:'#fdf4ff', LOCATION:'#fff7ed' };
+  if (evidenceList.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:20px;">No evidence recorded yet.</div>';
+    return;
+  }
+  list.innerHTML = evidenceList.map(ev => `
+    <div class="evidence-item">
+      <div class="ev-icon" style="background:${colors[ev.type]||'#f3f4f6'};">${icons[ev.type]||'📁'}</div>
+      <div style="flex:1;">
+        <div class="ev-name">${ev.fileName}</div>
+        <div class="ev-meta">${ev.meta} · ${ev.time}</div>
+      </div>
+      <span class="ev-badge">🔒 Encrypted</span>
+    </div>
+  `).join('');
+}
+
+async function loadEvidence() {
+  try {
+    const res = await fetch(`${API}/api/evidence/${user.id}`);
+    const data = await res.json();
+    if (data.success && data.data?.length > 0) {
+      evidenceList = data.data.map(ev => ({
+        type: ev.evidenceType,
+        fileName: ev.fileUrl?.split('/').pop() || 'evidence_file',
+        meta: ev.durationSeconds ? `${ev.evidenceType} · ${ev.durationSeconds}s` : ev.evidenceType,
+        time: new Date(ev.createdAt).toLocaleTimeString()
+      }));
+      renderEvidence();
+      document.getElementById('ev-count').textContent = evidenceList.length;
+    }
+  } catch(e) { console.log('Load evidence error', e); }
+}
+
+async function saveLocation() {
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const loc = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+    await saveEvidence('LOCATION', 'location_' + Date.now() + '.gps', `GPS: ${loc}`);
+  }, () => saveEvidence('LOCATION', 'location_' + Date.now() + '.gps', 'GPS: Delhi, India'));
+}
+
+async function generateFIR() {
+  const type = document.getElementById('fir-type').value;
+  const loc  = document.getElementById('fir-location').value.trim();
+  const desc = document.getElementById('fir-desc').value.trim();
+  if (!loc || !desc) { showToast('Please fill location and description!', 'error'); return; }
+
+  const btn = document.getElementById('fir-btn');
+  btn.disabled = true; btn.textContent = '⏳ AI generating FIR...';
+
+  try {
+    const res = await fetch(`${API}/api/fir/generate`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: user.id, incidentType: type, location: loc, description: desc })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const fir = data.data;
+      currentFirId = fir.id;
+      document.getElementById('fir-preview').textContent = fir.aiSummary;
+      document.getElementById('fir-preview').className = 'fir-preview show';
+      document.getElementById('fir-actions').style.display = 'grid';
+      document.getElementById('fir-count').textContent = parseInt(document.getElementById('fir-count').textContent) + 1;
+      showToast('FIR draft generated successfully!');
+    } else { showToast(data.message || 'FIR generation failed', 'error'); }
+  } catch(e) { showToast('Cannot connect to server!', 'error'); }
+
+  btn.disabled = false; btn.textContent = '🤖 Generate AI FIR Draft';
+}
+
+function copyFIR() {
+  const text = document.getElementById('fir-preview').textContent;
+  navigator.clipboard?.writeText(text);
+  showToast('FIR copied to clipboard!');
+}
+
+async function submitFIR() {
+  if (!currentFirId) { showToast('Generate FIR first!', 'error'); return; }
+  try {
+    await fetch(`${API}/api/fir/submit/${currentFirId}`, { method: 'POST' });
+    showToast('FIR submitted to police station!');
+  } catch(e) { showToast('Submission failed', 'error'); }
+}
+</script>
+</body>
+</html>

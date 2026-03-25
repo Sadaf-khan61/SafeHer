@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeHer — AI Guard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f4f5; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+  .status-bar { background: linear-gradient(135deg,#be185d,#9f1239); padding: 10px 20px 0; display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .header { background: linear-gradient(135deg,#be185d,#9f1239); padding: 16px 20px 24px; color: white; }
+  .header-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .header-sub { font-size: 13px; opacity: .8; }
+  .content { padding: 14px 14px 90px; }
+  .card { background: white; border-radius: 16px; padding: 18px; border: 1px solid #ffe4e6; box-shadow: 0 2px 10px rgba(190,24,93,0.07); margin-bottom: 14px; }
+  .card-title { font-weight: 800; font-size: 15px; color: #111827; margin-bottom: 12px; }
+
+  /* Big AI Monitor */
+  .ai-monitor { text-align: center; padding: 10px 0 16px; }
+  .ai-circle { width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all .3s; position: relative; }
+  .ai-circle.safe     { background: linear-gradient(135deg,#dcfce7,#f0fdf4); border: 4px solid #86efac; box-shadow: 0 0 30px rgba(34,197,94,.2); }
+  .ai-circle.warning  { background: linear-gradient(135deg,#fefce8,#fffbeb); border: 4px solid #fde047; box-shadow: 0 0 30px rgba(234,179,8,.3); }
+  .ai-circle.danger   { background: linear-gradient(135deg,#fee2e2,#fef2f2); border: 4px solid #fca5a5; box-shadow: 0 0 30px rgba(239,68,68,.35); animation: pulse-danger 1s infinite; }
+  @keyframes pulse-danger { 0%,100%{box-shadow:0 0 30px rgba(239,68,68,.35);} 50%{box-shadow:0 0 50px rgba(239,68,68,.6);} }
+  .ai-circle-icon { font-size: 44px; }
+  .ai-circle-text { font-size: 13px; font-weight: 800; margin-top: 4px; }
+  .ai-circle.safe    .ai-circle-text { color: #16a34a; }
+  .ai-circle.warning .ai-circle-text { color: #ca8a04; }
+  .ai-circle.danger  .ai-circle-text { color: #dc2626; }
+  .confidence-bar { width: 100%; background: #f3f4f6; border-radius: 999px; height: 8px; margin-bottom: 6px; }
+  .confidence-fill { height: 8px; border-radius: 999px; transition: width .5s; }
+  .conf-label { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-bottom: 10px; }
+
+  /* Detection Items */
+  .detection-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid; }
+  .detection-item.active   { background: #fef2f2; border-color: #fca5a5; }
+  .detection-item.inactive { background: #f8fafc; border-color: #e5e7eb; }
+  .det-icon { font-size: 24px; }
+  .det-info { flex: 1; }
+  .det-title { font-weight: 700; font-size: 13px; }
+  .det-sub   { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .det-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .det-badge.on  { background: #dcfce7; color: #16a34a; }
+  .det-badge.off { background: #f3f4f6; color: #9ca3af; }
+  .det-badge.warn { background: #fef9c3; color: #ca8a04; }
+  .det-badge.alert { background: #fee2e2; color: #dc2626; }
+
+  /* Alert Log */
+  .log-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #fef2f2; }
+  .log-item:last-child { border-bottom: none; }
+  .log-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .log-time  { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .log-title { font-weight: 700; font-size: 13px; color: #374151; }
+
+  /* Keyword chips */
+  .keywords { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .kw-chip { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .kw-chip.active { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+  .kw-chip.normal { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid #ffe4e6; display: flex; box-shadow: 0 -4px 20px rgba(190,24,93,.1); z-index: 99; }
+  .nav-item { flex: 1; padding: 10px 4px 14px; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Segoe UI', sans-serif; transition: all .2s; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: #9ca3af; }
+  .nav-item.active .nav-label { color: #be185d; }
+  .nav-bar { width: 20px; height: 3px; border-radius: 999px; background: #be185d; margin-top: 1px; }
+
+  /* Simulate btn */
+  .sim-btn { width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; transition: all .2s; margin-top: 4px; }
+  .sim-btn:hover { transform: translateY(-1px); }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(40px); background: white; border: 1px solid #ffe4e6; border-radius: 12px; padding: 11px 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; box-shadow: 0 8px 24px rgba(190,24,93,0.15); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { color: #16a34a; border-color: #86efac; }
+  .toast.error   { color: #dc2626; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span id="curr-time">9:15 PM</span>
+  <span>🛡️ SafeHer</span>
+  <span>🔋 84%</span>
+</div>
+
+<div class="header">
+  <div class="header-title">🤖 AI Guardian</div>
+  <div class="header-sub">Real-time danger detection system</div>
+</div>
+
+<div class="content">
+
+  <!-- AI Monitor -->
+  <div class="card">
+    <div class="ai-monitor">
+      <div class="ai-circle safe" id="ai-circle">
+        <div class="ai-circle-icon" id="ai-icon">🛡️</div>
+        <div class="ai-circle-text" id="ai-status-text">All Safe</div>
+      </div>
+
+      <!-- Voice Stress -->
+      <div class="conf-label"><span>🎙️ Voice Stress Level</span><span id="stress-pct">12%</span></div>
+      <div class="confidence-bar"><div class="confidence-fill" id="stress-bar" style="width:12%;background:#86efac;"></div></div>
+
+      <!-- Danger Confidence -->
+      <div class="conf-label"><span>⚠️ Danger Confidence</span><span id="danger-pct">8%</span></div>
+      <div class="confidence-bar"><div class="confidence-fill" id="danger-bar" style="width:8%;background:#86efac;"></div></div>
+    </div>
+  </div>
+
+  <!-- Simulate Buttons -->
+  <div class="card">
+    <div class="card-title">🧪 Simulate AI Detection</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="sim-btn" style="background:#f0fdf4;color:#16a34a;" onclick="simulate('safe')">✅ All Safe</button>
+      <button class="sim-btn" style="background:#fefce8;color:#ca8a04;" onclick="simulate('warning')">⚠️ Warning</button>
+      <button class="sim-btn" style="background:#fff7ed;color:#ea580c;" onclick="simulate('keyword')">🗣️ Keyword Alert</button>
+      <button class="sim-btn" style="background:#fef2f2;color:#dc2626;" onclick="simulate('danger')">🚨 Full Danger</button>
+    </div>
+  </div>
+
+  <!-- Detection Modules -->
+  <div class="card">
+    <div class="card-title">🔍 Detection Modules</div>
+
+    <div class="detection-item inactive" id="det-voice">
+      <div class="det-icon">🎙️</div>
+      <div class="det-info">
+        <div class="det-title">Voice Stress Detection</div>
+        <div class="det-sub">Analyzing pitch, tremors and stress patterns</div>
+      </div>
+      <span class="det-badge on" id="badge-voice">Normal</span>
+    </div>
+
+    <div class="detection-item inactive" id="det-keyword">
+      <div class="det-icon">💬</div>
+      <div class="det-info">
+        <div class="det-title">Keyword Detection</div>
+        <div class="det-sub">Listening for danger words</div>
+      </div>
+      <span class="det-badge on" id="badge-keyword">Clear</span>
+    </div>
+
+    <div class="detection-item inactive" id="det-gesture">
+      <div class="det-icon">📱</div>
+      <div class="det-info">
+        <div class="det-title">Panic Gesture</div>
+        <div class="det-sub">Frantic shaking / rapid taps / panic grip</div>
+      </div>
+      <span class="det-badge on" id="badge-gesture">Normal</span>
+    </div>
+
+    <div class="detection-item inactive" id="det-route">
+      <div class="det-icon">🗺️</div>
+      <div class="det-info">
+        <div class="det-title">Route Deviation</div>
+        <div class="det-sub">Monitoring expected route patterns</div>
+      </div>
+      <span class="det-badge on" id="badge-route">On Route</span>
+    </div>
+  </div>
+
+  <!-- Danger Keywords -->
+  <div class="card">
+    <div class="card-title">🚨 Danger Keywords Monitored</div>
+    <div class="keywords">
+      <div class="kw-chip normal">help</div>
+      <div class="kw-chip normal">leave me</div>
+      <div class="kw-chip normal">don't touch</div>
+      <div class="kw-chip normal">stop it</div>
+      <div class="kw-chip normal">bachao</div>
+      <div class="kw-chip normal">chodo mujhe</div>
+      <div class="kw-chip normal">please stop</div>
+      <div class="kw-chip normal">let me go</div>
+    </div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:10px;">🤖 AI listens in background when Guardian is ON</div>
+  </div>
+
+  <!-- Alert Log -->
+  <div class="card">
+    <div class="card-title">📋 Alert History</div>
+    <div id="alert-log">
+      <div class="log-item">
+        <div class="log-dot" style="background:#86efac;"></div>
+        <div>
+          <div class="log-title">✅ System Active — All Clear</div>
+          <div class="log-time">Just now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='dashboard.html'">
+    <div class="nav-icon">🏠</div><div class="nav-label">Home</div>
+  </button>
+  <button class="nav-item active" onclick="window.location.href='ai-guard.html'">
+    <div class="nav-icon">🤖</div><div class="nav-label">AI Guard</div>
+    <div class="nav-bar"></div>
+  </button>
+  <button class="nav-item" onclick="window.location.href='community.html'">
+    <div class="nav-icon">🌐</div><div class="nav-label">Community</div>
+  </button>
+  <button class="nav-item" onclick="window.location.href='escape.html'">
+    <div class="nav-icon">🎭</div><div class="nav-label">Escape</div>
+  </button>
+  <button class="nav-item" onclick="window.location.href='evidence.html'">
+    <div class="nav-icon">⚖️</div><div class="nav-label">Evidence</div>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://safeher-a-women-saftey-app.onrender.com';
+const user = JSON.parse(localStorage.getItem('safher_user') || '{}');
+
+window.onload = () => {
+  if (!user.id) { window.location.href = 'index.html'; return; }
+  updateTime();
+  setInterval(updateTime, 1000);
+};
+
+function updateTime() {
+  const now = new Date();
+  document.getElementById('curr-time').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '⚠️ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function addLog(msg, color) {
+  const log = document.getElementById('alert-log');
+  const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `<div class="log-dot" style="background:${color};"></div><div><div class="log-title">${msg}</div><div class="log-time">${now}</div></div>`;
+  log.insertBefore(item, log.firstChild);
+}
+
+function simulate(type) {
+  const circle = document.getElementById('ai-circle');
+  const icon   = document.getElementById('ai-icon');
+  const txt    = document.getElementById('ai-status-text');
+  const stressBar = document.getElementById('stress-bar');
+  const dangerBar = document.getElementById('danger-bar');
+  const stressPct = document.getElementById('stress-pct');
+  const dangerPct = document.getElementById('danger-pct');
+
+  // Reset all detection items
+  document.querySelectorAll('.detection-item').forEach(d => d.className = 'detection-item inactive');
+  document.querySelectorAll('.kw-chip').forEach(k => k.className = 'kw-chip normal');
+
+  if (type === 'safe') {
+    circle.className = 'ai-circle safe'; icon.textContent = '🛡️'; txt.textContent = 'All Safe';
+    stressBar.style.width = '12%'; stressBar.style.background = '#86efac'; stressPct.textContent = '12%';
+    dangerBar.style.width = '8%';  dangerBar.style.background = '#86efac'; dangerPct.textContent = '8%';
+    addLog('✅ All clear — no threats detected', '#86efac');
+    showToast('AI Guardian: All Safe!');
+
+  } else if (type === 'warning') {
+    circle.className = 'ai-circle warning'; icon.textContent = '⚠️'; txt.textContent = 'Caution';
+    stressBar.style.width = '55%'; stressBar.style.background = '#fde047'; stressPct.textContent = '55%';
+    dangerBar.style.width = '40%'; dangerBar.style.background = '#fde047'; dangerPct.textContent = '40%';
+    document.getElementById('det-voice').className = 'detection-item active';
+    document.getElementById('badge-voice').textContent = 'Elevated';
+    document.getElementById('badge-voice').className = 'det-badge warn';
+    document.getElementById('det-gesture').className = 'detection-item active';
+    document.getElementById('badge-gesture').textContent = 'Detected';
+    document.getElementById('badge-gesture').className = 'det-badge warn';
+    addLog('⚠️ Elevated stress detected — monitoring closely', '#fde047');
+    showToast('Caution: Elevated stress detected', 'error');
+
+  } else if (type === 'keyword') {
+    circle.className = 'ai-circle warning'; icon.textContent = '💬'; txt.textContent = 'Keyword Alert';
+    stressBar.style.width = '68%'; stressBar.style.background = '#fb923c'; stressPct.textContent = '68%';
+    dangerBar.style.width = '60%'; dangerBar.style.background = '#fb923c'; dangerPct.textContent = '60%';
+    document.getElementById('det-keyword').className = 'detection-item active';
+    document.getElementById('badge-keyword').textContent = 'DETECTED!';
+    document.getElementById('badge-keyword').className = 'det-badge alert';
+    // Highlight keywords
+    document.querySelectorAll('.kw-chip').forEach((k, i) => {
+      if (i < 2) k.className = 'kw-chip active';
+    });
+    addLog('🗣️ Danger keyword detected: "help" and "leave me"', '#fb923c');
+    showToast('Keyword "help" detected!', 'error');
+
+  } else if (type === 'danger') {
+    circle.className = 'ai-circle danger'; icon.textContent = '🚨'; txt.textContent = 'DANGER!';
+    stressBar.style.width = '92%'; stressBar.style.background = '#f87171'; stressPct.textContent = '92%';
+    dangerBar.style.width = '88%'; dangerBar.style.background = '#f87171'; dangerPct.textContent = '88%';
+    document.querySelectorAll('.detection-item').forEach(d => d.className = 'detection-item active');
+    document.getElementById('badge-voice').textContent = 'DANGER!'; document.getElementById('badge-voice').className = 'det-badge alert';
+    document.getElementById('badge-keyword').textContent = 'DETECTED!'; document.getElementById('badge-keyword').className = 'det-badge alert';
+    document.getElementById('badge-gesture').textContent = 'PANIC!'; document.getElementById('badge-gesture').className = 'det-badge alert';
+    document.getElementById('badge-route').textContent = 'DEVIATED!'; document.getElementById('badge-route').className = 'det-badge alert';
+    document.querySelectorAll('.kw-chip').forEach(k => k.className = 'kw-chip active');
+    addLog('🚨 DANGER! Auto-SOS triggered in 10 seconds!', '#f87171');
+    showToast('DANGER detected! SOS auto-triggering!', 'error');
+    // Save alert to backend
+    saveDangerAlert('VOICE_STRESS', 92);
+  }
+}
+
+async function saveDangerAlert(type, confidence) {
+  try {
+    await fetch(`${API}/api/sos/trigger`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, latitude: 28.6139, longitude: 77.2090, locationName: 'Current Location', triggeredBy: 'AI_VOICE' })
+    });
+  } catch(e) { console.log('Alert save error', e); }
+}
+</script>
+</body>
+</html>

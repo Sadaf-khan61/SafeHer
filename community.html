@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeHer — Community</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f4f5; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+  .status-bar { background: linear-gradient(135deg,#be185d,#9f1239); padding: 10px 20px 0; display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .header { background: linear-gradient(135deg,#be185d,#9f1239); padding: 16px 20px 24px; color: white; }
+  .header-title { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .header-sub { font-size: 13px; opacity: .8; margin-bottom: 16px; }
+  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .stat-box { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 10px; text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 900; }
+  .stat-lbl { font-size: 10px; opacity: .8; margin-top: 2px; }
+  .content { padding: 14px 14px 90px; }
+  .card { background: white; border-radius: 16px; padding: 18px; border: 1px solid #ffe4e6; box-shadow: 0 2px 10px rgba(190,24,93,0.07); margin-bottom: 14px; }
+  .card-title { font-weight: 800; font-size: 15px; color: #111827; margin-bottom: 12px; }
+
+  /* Guardian Button */
+  .guardian-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-weight: 900; cursor: pointer; font-family: 'Segoe UI', sans-serif; transition: all .3s; }
+  .guardian-btn.off { background: linear-gradient(135deg,#be185d,#9f1239); color: white; box-shadow: 0 4px 16px rgba(190,24,93,.35); }
+  .guardian-btn.on  { background: linear-gradient(135deg,#16a34a,#15803d); color: white; box-shadow: 0 4px 16px rgba(22,163,74,.35); }
+  .guardian-status { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 8px; }
+
+  /* Help Request */
+  .help-btn { width: 100%; padding: 14px; background: linear-gradient(135deg,#dc2626,#991b1b); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 16px rgba(220,38,38,.35); transition: all .2s; }
+  .help-btn:hover { transform: translateY(-1px); }
+
+  /* Safe Spots */
+  .spot-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ffe4e6; background: #fff9fb; transition: all .2s; cursor: pointer; }
+  .spot-item:hover { background: #fff1f2; border-color: #fda4af; }
+  .spot-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .spot-name  { font-weight: 700; font-size: 13px; color: #374151; }
+  .spot-addr  { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .spot-right { text-align: right; flex-shrink: 0; }
+  .spot-dist  { font-size: 13px; font-weight: 800; color: #be185d; }
+  .spot-time  { font-size: 10px; color: #9ca3af; }
+  .spot-open  { font-size: 10px; font-weight: 700; color: #16a34a; }
+
+  /* Guardians nearby */
+  .guardian-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #fef2f2; }
+  .guardian-item:last-child { border-bottom: none; }
+  .guardian-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#be185d,#9f1239); display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; flex-shrink: 0; }
+  .guardian-name { font-weight: 700; font-size: 13px; color: #374151; }
+  .guardian-info { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .guardian-dist { font-size: 13px; font-weight: 800; color: #be185d; }
+
+  /* Contact form */
+  .form-group { margin-bottom: 12px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 5px; }
+  input, select { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; color: #111827; outline: none; font-family: 'Segoe UI', sans-serif; background: #fafafa; }
+  input:focus, select:focus { border-color: #be185d; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-main { width: 100%; padding: 13px; background: linear-gradient(135deg,#be185d,#9f1239); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Segoe UI', sans-serif; }
+
+  /* Bottom Nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid #ffe4e6; display: flex; box-shadow: 0 -4px 20px rgba(190,24,93,.1); z-index: 99; }
+  .nav-item { flex: 1; padding: 10px 4px 14px; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Segoe UI', sans-serif; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 700; color: #9ca3af; }
+  .nav-item.active .nav-label { color: #be185d; }
+  .nav-bar { width: 20px; height: 3px; border-radius: 999px; background: #be185d; margin-top: 1px; }
+
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(40px); background: white; border: 1px solid #ffe4e6; border-radius: 12px; padding: 11px 20px; font-size: 13px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; box-shadow: 0 8px 24px rgba(190,24,93,0.15); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { color: #16a34a; border-color: #86efac; }
+  .toast.error   { color: #dc2626; border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span id="curr-time">9:15 PM</span>
+  <span>🛡️ SafeHer</span>
+  <span>🔋 84%</span>
+</div>
+
+<div class="header">
+  <div class="header-title">🌐 Community Safety</div>
+  <div class="header-sub">Guardian Angels & Safe Spots near you</div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val">247</div><div class="stat-lbl">Guardians Nearby</div></div>
+    <div class="stat-box"><div class="stat-val">12</div><div class="stat-lbl">Helped This Month</div></div>
+    <div class="stat-box"><div class="stat-val">4.8⭐</div><div class="stat-lbl">Avg Response</div></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Guardian Angel Mode -->
+  <div class="card">
+    <div class="card-title">👼 Guardian Angel Mode</div>
+    <button class="guardian-btn off" id="guardian-btn" onclick="toggleGuardian()">
+      👼 Become a Guardian Angel
+    </button>
+    <div class="guardian-status" id="guardian-status">
+      Help other women in your area anonymously
+    </div>
+  </div>
+
+  <!-- Request Help -->
+  <div class="card">
+    <div class="card-title">🆘 Request Community Help</div>
+    <div class="form-group">
+      <label>📝 Describe Your Situation</label>
+      <input type="text" id="help-msg" placeholder="I need help near Metro Station..."/>
+    </div>
+    <button class="help-btn" onclick="requestHelp()">🆘 Send Help Request to Nearby Guardians</button>
+  </div>
+
+  <!-- Safe Spots -->
+  <div class="card">
+    <div class="card-title">📍 Nearest Safe Spots</div>
+
+    <div class="spot-item" onclick="openMaps(28.6330, 77.2194)">
+      <div class="spot-icon" style="background:#eff6ff;">☕</div>
+      <div style="flex:1;">
+        <div class="spot-name">Metro Cafe CP</div>
+        <div class="spot-addr">Connaught Place, Delhi</div>
+        <div class="spot-open">● Open Now</div>
+      </div>
+      <div class="spot-right">
+        <div class="spot-dist">0.3 km</div>
+        <div class="spot-time">4 min walk</div>
+      </div>
+    </div>
+
+    <div class="spot-item" onclick="openMaps(28.6315, 77.2167)">
+      <div class="spot-icon" style="background:#f0fdf4;">👮</div>
+      <div style="flex:1;">
+        <div class="spot-name">CP Police Post</div>
+        <div class="spot-addr">Inner Circle, Connaught Place</div>
+        <div class="spot-open">● Open 24/7</div>
+      </div>
+      <div class="spot-right">
+        <div class="spot-dist">0.5 km</div>
+        <div class="spot-time">6 min walk</div>
+      </div>
+    </div>
+
+    <div class="spot-item" onclick="openMaps(28.6280, 77.2150)">
+      <div class="spot-icon" style="background:#fef9c3;">💊</div>
+      <div style="flex:1;">
+        <div class="spot-name">Apollo Pharmacy</div>
+        <div class="spot-addr">MG Road, Delhi</div>
+        <div class="spot-open">● Open Now</div>
+      </div>
+      <div class="spot-right">
+        <div class="spot-dist">0.7 km</div>
+        <div class="spot-time">9 min walk</div>
+      </div>
+    </div>
+
+    <div class="spot-item" onclick="openMaps(28.6290, 77.2190)">
+      <div class="spot-icon" style="background:#fef2f2;">🏥</div>
+      <div style="flex:1;">
+        <div class="spot-name">Ram Manohar Lohia Hospital</div>
+        <div class="spot-addr">Baba Kharak Singh Marg</div>
+        <div class="spot-open">● Open 24/7</div>
+      </div>
+      <div class="spot-right">
+        <div class="spot-dist">1.2 km</div>
+        <div class="spot-time">15 min walk</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nearby Guardians -->
+  <div class="card">
+    <div class="card-title">👼 Guardians Nearby</div>
+    <div class="guardian-item">
+      <div class="guardian-avatar">👩</div>
+      <div style="flex:1;">
+        <div class="guardian-name">Anita S. (Verified ✓)</div>
+        <div class="guardian-info">⭐ 4.9 · 23 people helped</div>
+      </div>
+      <div class="guardian-dist">0.4 km</div>
+    </div>
+    <div class="guardian-item">
+      <div class="guardian-avatar">👩‍🦱</div>
+      <div style="flex:1;">
+        <div class="guardian-name">Meera K. (Verified ✓)</div>
+        <div class="guardian-info">⭐ 4.7 · 11 people helped</div>
+      </div>
+      <div class="guardian-dist">0.6 km</div>
+    </div>
+    <div class="guardian-item">
+      <div class="guardian-avatar">👮‍♀️</div>
+      <div style="flex:1;">
+        <div class="guardian-name">Officer Priya (Police ✓)</div>
+        <div class="guardian-info">⭐ 5.0 · 47 people helped</div>
+      </div>
+      <div class="guardian-dist">0.8 km</div>
+    </div>
+  </div>
+
+  <!-- Add Trusted Contact -->
+  <div class="card">
+    <div class="card-title">➕ Add Trusted Contact</div>
+    <div class="input-row">
+      <div class="form-group"><label>Name</label><input type="text" id="c-name" placeholder="Mom"/></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="c-phone" placeholder="9876543210"/></div>
+    </div>
+    <div class="form-group">
+      <label>Relation</label>
+      <select id="c-relation">
+        <option>Mother</option><option>Father</option><option>Husband</option>
+        <option>Sister</option><option>Brother</option><option>Friend</option><option>Other</option>
+      </select>
+    </div>
+    <button class="btn-main" onclick="addContact()">➕ Add Contact</button>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='dashboard.html'"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></button>
+  <button class="nav-item" onclick="window.location.href='ai-guard.html'"><div class="nav-icon">🤖</div><div class="nav-label">AI Guard</div></button>
+  <button class="nav-item active" onclick="window.location.href='community.html'"><div class="nav-icon">🌐</div><div class="nav-label">Community</div><div class="nav-bar"></div></button>
+  <button class="nav-item" onclick="window.location.href='escape.html'"><div class="nav-icon">🎭</div><div class="nav-label">Escape</div></button>
+  <button class="nav-item" onclick="window.location.href='evidence.html'"><div class="nav-icon">⚖️</div><div class="nav-label">Evidence</div></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://safeher-a-women-saftey-app.onrender.com';
+const user = JSON.parse(localStorage.getItem('safher_user') || '{}');
+let guardianOn = false;
+
+window.onload = () => {
+  if (!user.id) { window.location.href = 'index.html'; return; }
+  updateTime(); setInterval(updateTime, 1000);
+};
+
+function updateTime() {
+  document.getElementById('curr-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function toggleGuardian() {
+  guardianOn = !guardianOn;
+  const btn = document.getElementById('guardian-btn');
+  const status = document.getElementById('guardian-status');
+  if (guardianOn) {
+    btn.className = 'guardian-btn on';
+    btn.textContent = '✅ Guardian Angel Active — Helping Others';
+    status.textContent = 'You will receive anonymous help requests nearby';
+    status.style.color = '#16a34a';
+    showToast('You are now a Guardian Angel! 👼');
+  } else {
+    btn.className = 'guardian-btn off';
+    btn.textContent = '👼 Become a Guardian Angel';
+    status.textContent = 'Help other women in your area anonymously';
+    status.style.color = '#9ca3af';
+    showToast('Guardian mode turned off');
+  }
+}
+
+async function requestHelp() {
+  const msg = document.getElementById('help-msg').value.trim();
+  if (!msg) { showToast('Please describe your situation!', 'error'); return; }
+  try {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      await fetch(`${API}/api/community/request`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ userId: user.id, latitude: pos.coords.latitude, longitude: pos.coords.longitude, message: msg })
+      });
+      showToast('Help request sent to 247 guardians nearby!');
+      document.getElementById('help-msg').value = '';
+    }, async () => {
+      await fetch(`${API}/api/community/request`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ userId: user.id, latitude: 28.6139, longitude: 77.2090, message: msg })
+      });
+      showToast('Help request sent to 247 guardians nearby!');
+      document.getElementById('help-msg').value = '';
+    });
+  } catch(e) { showToast('Could not send request', 'error'); }
+}
+
+async function addContact() {
+  const name     = document.getElementById('c-name').value.trim();
+  const phone    = document.getElementById('c-phone').value.trim();
+  const relation = document.getElementById('c-relation').value;
+  if (!name || !phone) { showToast('Please fill name and phone!', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/api/contacts/${user.id}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, phone, relation })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`${name} added as trusted contact!`);
+      document.getElementById('c-name').value = '';
+      document.getElementById('c-phone').value = '';
+    } else { showToast(data.message || 'Failed to add contact', 'error'); }
+  } catch(e) { showToast('Cannot connect to server!', 'error'); }
+}
+
+function openMaps(lat, lng) {
+  window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank');
+}
+</script>
+</body>
+</html>
