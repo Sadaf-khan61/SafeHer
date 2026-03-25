@@ -16,7 +16,7 @@ A full-stack AI-powered women safety web application built with Spring Boot & va
 
 🔗 **[https://safeher-a-women-saftey-app.onrender.com](https://safeher-a-women-saftey-app.onrender.com)**
 
-⚠️ **Note:** The app is hosted on Render's free tier. It may take 30–50 seconds to load on first visit as the server spins up from sleep.
+⚠️ **Note:** This project is currently under development. Some features are still being worked on and improvements are being made regularly. Stay tuned for updates!
 
 ---
 
