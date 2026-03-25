@@ -16,70 +16,44 @@
 
 ---
 
-## 📌 About The Project
+## 📌 About
 
 SafeHer is a full-stack women safety web application built for working women and daily commuters. It provides real-time safety tools including one-tap SOS alerts, AI danger detection, encrypted evidence recording, AI-generated FIR reports, and a community guardian network.
 
-This repository contains the **Frontend** of the project built with plain HTML, CSS and JavaScript.
-
-The **Backend** is built with Java Spring Boot and deployed separately on Render.com.
+This repository contains the **Frontend** built with plain HTML, CSS and JavaScript. The backend is built with Java Spring Boot and deployed separately on Render.com.
 
 ---
 
 ## ✨ Features
 
-| Feature | Description | Status |
-|---|---|---|
-| 🆘 SOS Alert | One-tap emergency alert with real GPS location | ✅ Live |
-| 🤖 AI Guardian | Voice stress and keyword danger detection | ✅ Live |
-| ⚖️ Evidence Vault | Encrypted audio/video/photo recording | ✅ Live |
-| 📋 AI FIR Generator | Auto-generates legal police complaint | ✅ Live |
-| 🌐 Community Safety | Guardian Angel network + safe spots map | ✅ Live |
-| 🎭 Escape Tools | Fake call simulator + escape strategies | ✅ Live |
-
----
-
-## 📱 Pages
-
-```
-index.html      → Login & Register
-dashboard.html  → Home Dashboard + SOS Button
-ai-guard.html   → AI Danger Detection
-community.html  → Guardian Network + Safe Spots
-escape.html     → Fake Call + Escape Strategies
-evidence.html   → Evidence Vault + FIR Generator
-```
+- 🆘 **SOS Alert** — One-tap emergency alert with real GPS location capture
+- 🤖 **AI Guardian** — Voice stress and keyword danger detection simulation
+- ⚖️ **Evidence Vault** — Encrypted audio, video and photo recording
+- 📋 **AI FIR Generator** — Auto-generates legal police complaint from description
+- 🌐 **Community Safety** — Guardian Angel network and nearest safe spots
+- 🎭 **Escape Tools** — Fake call simulator and emergency exit strategies
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Frontend**
-- HTML5
-- CSS3 (Pink gradient theme, mobile-first design)
-- JavaScript (Vanilla JS, REST API calls)
-
-**Backend** *(separate repository)*
-- Java 21
-- Spring Boot 3.5
-- Spring Security
-- Hibernate / JPA
-- Maven
-
-**Database**
-- MySQL 8 hosted on Aiven Cloud
-
-**Deployment**
-- Docker
-- Render.com
+| Layer | Technology |
+|---|---|
+| Frontend | HTML5, CSS3, JavaScript |
+| Backend | Java 21, Spring Boot 3.5, Spring Security |
+| Database | MySQL 8 on Aiven Cloud |
+| Deployment | Docker, Render.com |
+| Version Control | Git, GitHub |
 
 ---
 
 ## 🚀 How To Run Locally
 
 ### Prerequisites
+- Java 21 installed
+- Maven installed
+- MySQL running locally
 - Spring Boot backend running on `http://localhost:8080`
-- MySQL database configured
 
 ### Steps
 
@@ -99,61 +73,10 @@ http://localhost:8080/index.html
 
 ---
 
-## 📂 Project Structure
-
-```
-SafeHer-Frontend/
-│
-├── index.html          # Login & Register page
-├── dashboard.html      # Main dashboard with SOS
-├── ai-guard.html       # AI Guardian detection page
-├── community.html      # Community safety page
-├── escape.html         # Escape tools page
-├── evidence.html       # Evidence vault + FIR page
-└── README.md           # Project documentation
-```
-
----
-
-## 🔌 API Endpoints Used
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login user |
-| POST | `/api/sos/trigger` | Trigger SOS alert |
-| GET | `/api/contacts/{userId}` | Get trusted contacts |
-| POST | `/api/contacts/{userId}` | Add trusted contact |
-| POST | `/api/evidence/save` | Save evidence |
-| POST | `/api/fir/generate` | Generate AI FIR |
-| POST | `/api/community/request` | Request community help |
-
----
-
-## 🗺️ Future Roadmap
-
-- [ ] Android APK using WebView
-- [ ] Real voice stress detection using Web Speech API
-- [ ] Twilio SMS alerts to trusted contacts
-- [ ] Google Places API for real nearby safe spots
-- [ ] Flutter rebuild for Android + iPhone both
-- [ ] Google Play Store launch
-
----
-
 ## 👩‍💻 Author
 
 **Sadaf Khan**
-- 📧 talktosadafk@gmail.com
-- 🔗 [LinkedIn](https://linkedin.com)
-- 💻 [GitHub](https://github.com/Sadaf-khan61)
-- 🏆 [Codolio](https://codolio.com)
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+📧 talktosadafk@gmail.com
 
 ---
 
